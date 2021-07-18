@@ -1,4 +1,4 @@
-package iox
+package main
 
 import (
 	"path/filepath"
@@ -10,31 +10,37 @@ import (
 
 func TestPathMatch1(t *testing.T) {
 	b, err := filepath.Match("dir/*.txt", "dir/a.txt")
-	assert.Nil(t, err)
-	assert.True(t, b)
+	if !b || err != nil {
+		t.Errorf(`filepath.Match("dir/*.txt", "dir/a.txt") = %v, %v`, b, err)
+	}
 }
 
 func TestPathMatch2(t *testing.T) {
 	b, err := filepath.Match("dir/**/*.txt", "dir/a.txt")
-	assert.Nil(t, err)
-	assert.False(t, b)
+	if b || err != nil {
+		t.Errorf(`filepath.Match("dir/**/*.txt", "dir/a.txt") = %v, %v`, b, err)
+	}
 }
 
 func TestPathMatch3(t *testing.T) {
 	b, err := filepath.Match("dir/**/*.txt", "dir/3/a.txt")
-	assert.Nil(t, err)
-	assert.True(t, b)
+	if !b || err != nil {
+		t.Errorf(`filepath.Match("dir/**/*.txt", "dir/3/a.txt") = %v, %v`, b, err)
+	}
 }
 
 func TestPathMatch4(t *testing.T) {
 	b, err := filepath.Match("dir/**/*.txt", "dir/3/5/a.txt")
-	assert.Nil(t, err)
 
 	// why??
 	if runtime.GOOS == "windows" {
-		assert.True(t, b)
+		if !b || err != nil {
+			t.Errorf(`filepath.Match("dir/**/*.txt", "dir/3/5/a.txt") = %v, %v`, b, err)
+		}
 	} else {
-		assert.False(t, b)
+		if b || err != nil {
+			t.Errorf(`filepath.Match("dir/**/*.txt", "dir/3/5/a.txt") = %v, %v`, b, err)
+		}
 	}
 }
 

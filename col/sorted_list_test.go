@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/pandafw/pango/str"
-	"github.com/stretchr/testify/assert"
 )
 
 type inta []interface{}
@@ -42,10 +41,14 @@ func TestSortedListAsc(t *testing.T) {
 
 		for j := 0; j < len(a); j++ {
 			sl.Add(a[j])
-			assert.True(t, sort.IsSorted(inta(sl.Values())), j)
+			if !sort.IsSorted(inta(sl.Values())) {
+				t.Errorf("[%d] sort.IsSorted(%v) = %v, want %v", j, sl.Values(), false, true)
+			}
 		}
 
-		assert.Equal(t, a, sl.Values())
+		if !reflect.DeepEqual(a, sl.Values()) {
+			t.Errorf("%v != %v", a, sl.Values())
+		}
 	}
 }
 
@@ -58,10 +61,15 @@ func TestSortedListDesc(t *testing.T) {
 		}
 		for j := len(a) - 1; j >= 0; j-- {
 			sl.Add(a[j])
-			assert.True(t, sort.IsSorted(inta(sl.Values())), j)
+
+			if !sort.IsSorted(inta(sl.Values())) {
+				t.Errorf("[%d] sort.IsSorted(%v) = %v, want %v", j, sl.Values(), false, true)
+			}
 		}
 
-		assert.Equal(t, a, sl.Values())
+		if !reflect.DeepEqual(a, sl.Values()) {
+			t.Errorf("%v != %v", a, sl.Values())
+		}
 	}
 }
 
@@ -76,11 +84,17 @@ func TestSortedListRandom(t *testing.T) {
 		}
 		for j := len(a) - 1; j >= 0; j-- {
 			sl.Add(a[j])
-			assert.True(t, sort.IsSorted(inta(sl.Values())), j)
+
+			if !sort.IsSorted(inta(sl.Values())) {
+				t.Errorf("[%d] sort.IsSorted(%v) = %v, want %v", j, sl.Values(), false, true)
+			}
 		}
 
 		sort.Sort(inta(a))
-		assert.Equal(t, a, sl.Values())
+
+		if !reflect.DeepEqual(a, sl.Values()) {
+			t.Errorf("%v != %v", a, sl.Values())
+		}
 	}
 }
 
@@ -131,11 +145,17 @@ func TestSortedListDelete(t *testing.T) {
 		sl.Add(i)
 	}
 
-	assert.False(t, sl.Delete(100))
-	for i := 0; i < 100; i++ {
-		assert.True(t, sl.Delete(i))
+	if sl.Delete(100) {
+		t.Error("sl.Delete(100)=true, want false")
 	}
-	assert.True(t, sl.IsEmpty())
+	for i := 0; i < 100; i++ {
+		if !sl.Delete(i) {
+			t.Errorf("sl.Delete(%v)=false, want true", i)
+		}
+	}
+	if !sl.IsEmpty() {
+		t.Error("sl.IsEmpty()=false, want true")
+	}
 }
 
 func TestSortedListDeleteAll(t *testing.T) {
@@ -148,16 +168,28 @@ func TestSortedListDeleteAll(t *testing.T) {
 		}
 	}
 
-	assert.Equal(t, 0, sl.DeleteAll(100))
-	for i := 0; i < 100; i++ {
-		z := i % 10
-		assert.Equal(t, z, sl.DeleteAll(i), i)
+	if sl.DeleteAll(100) != 0 {
+		t.Error("sl.DeleteAll(100) != 0")
 	}
-	assert.True(t, sl.IsEmpty())
+	for i := 0; i < 100; i++ {
+		w := i % 10
+
+		a := sl.DeleteAll(i)
+		if a != w {
+			t.Errorf("sl.DeleteAll(%d) = %v, want %v", i, a, w)
+		}
+	}
+	if !sl.IsEmpty() {
+		t.Error("sl.IsEmpty()=false, want true")
+	}
 }
 
 func TestSortedListString(t *testing.T) {
-	assert.Equal(t, "[1,2,3]", fmt.Sprintf("%s", NewSortedList(LessInt, 1, 3, 2)))
+	w := "[1,2,3]"
+	a := fmt.Sprintf("%s", NewSortedList(LessInt, 1, 3, 2))
+	if w != a {
+		t.Errorf("SortedList.String() = %v, want %v", a, w)
+	}
 }
 
 func TestSortedListMarshalJSON(t *testing.T) {
@@ -172,27 +204,36 @@ func TestSortedListMarshalJSON(t *testing.T) {
 
 	for i, c := range cs {
 		bs, err := json.Marshal(c.list)
-		assert.Nil(t, err)
-		assert.Equal(t, c.json, string(bs), fmt.Sprintf("Marshal [%d]", i))
+
+		if err != nil {
+			t.Fatalf("[%d] json.Marshal(%v) error: %v", i, c.list, err)
+		}
+
+		a := string(bs)
+		if !reflect.DeepEqual(c.json, a) {
+			t.Fatalf("[%d] json.Marshal(%v) = %v, want %v", i, c.list, a, c.json)
+		}
 	}
 }
 
 func TestSortedListUnmarshalJSON(t *testing.T) {
-	type Case struct {
+	cs := []struct {
 		json string
 		list *List
-	}
-
-	cs := []Case{
+	}{
 		{`["2","0","1"]`, NewList("0", "1", "2")},
 	}
 
 	for i, c := range cs {
 		a := NewSortedList(LessString)
 		err := json.Unmarshal([]byte(c.json), a)
-		assert.Nil(t, err)
+
+		if err != nil {
+			t.Fatalf("[%d] json.Unmarshal(%v) error: %v", i, c.json, err)
+		}
+
 		if !reflect.DeepEqual(a.list, c.list) {
-			t.Fatalf("Unmarshal List [%d] not deeply equal: %#v expected %#v", i, a, c.list)
+			t.Fatalf("[%d] json.Marshal(%v) = %v, want %v", i, c.json, a.list, c.list)
 		}
 	}
 }

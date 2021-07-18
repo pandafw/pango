@@ -10,11 +10,19 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
+	"github.com/pandafw/pango/str"
 )
 
 func init() {
 	gin.SetMode(gin.ReleaseMode)
+}
+
+func assertContains(t *testing.T, msg string, body string, ss ...string) {
+	for _, s := range ss {
+		if !str.Contains(body, s) {
+			t.Errorf(`%s response body not contains %q`, msg, s)
+		}
+	}
 }
 
 func TestTextLog(t *testing.T) {
@@ -28,52 +36,47 @@ func TestTextLog(t *testing.T) {
 
 	buffer.Reset()
 	performRequest(router, "GET", "/example?a=100")
-	assert.Contains(t, buffer.String(), "200")
-	assert.Contains(t, buffer.String(), "GET")
-	assert.Contains(t, buffer.String(), "/example")
-	assert.Contains(t, buffer.String(), "a=100")
+	assertContains(t, "GET /example?a=100", buffer.String(), "200", "GET", "/example", "a=100")
 
 	buffer.Reset()
 	performRequest(router, "POST", "/example")
-	assert.Contains(t, buffer.String(), "200")
-	assert.Contains(t, buffer.String(), "POST")
-	assert.Contains(t, buffer.String(), "/example")
+	assertContains(t, "POST /example", buffer.String(), "200", "POST", "/example")
 
 	buffer.Reset()
 	performRequest(router, "PUT", "/example")
-	assert.Contains(t, buffer.String(), "200")
-	assert.Contains(t, buffer.String(), "PUT")
-	assert.Contains(t, buffer.String(), "/example")
+	assertContains(t, "PUT /example", buffer.String(), "200", "PUT", "/example")
 
 	buffer.Reset()
 	performRequest(router, "DELETE", "/example")
-	assert.Contains(t, buffer.String(), "200")
-	assert.Contains(t, buffer.String(), "DELETE")
-	assert.Contains(t, buffer.String(), "/example")
+	assertContains(t, "DELETE /example", buffer.String(), "200", "DELETE", "/example")
 
 	buffer.Reset()
 	performRequest(router, "PATCH", "/example")
-	assert.Contains(t, buffer.String(), "200")
-	assert.Contains(t, buffer.String(), "PATCH")
-	assert.Contains(t, buffer.String(), "/example")
+	assertContains(t, "PATCH /example", buffer.String(), "200", "PATCH", "/example")
 
 	buffer.Reset()
 	performRequest(router, "HEAD", "/example")
-	assert.Contains(t, buffer.String(), "200")
-	assert.Contains(t, buffer.String(), "HEAD")
-	assert.Contains(t, buffer.String(), "/example")
+	assertContains(t, "HEAD /example", buffer.String(), "200", "HEAD", "/example")
 
 	buffer.Reset()
 	performRequest(router, "OPTIONS", "/example")
-	assert.Contains(t, buffer.String(), "200")
-	assert.Contains(t, buffer.String(), "OPTIONS")
-	assert.Contains(t, buffer.String(), "/example")
+	assertContains(t, "OPTIONS /example", buffer.String(), "200", "OPTIONS", "/example")
 
 	buffer.Reset()
 	performRequest(router, "GET", "/notfound")
-	assert.Contains(t, buffer.String(), "404")
-	assert.Contains(t, buffer.String(), "GET")
-	assert.Contains(t, buffer.String(), "/notfound")
+	assertContains(t, "GET /notfound", buffer.String(), "404", "GET", "/notfound")
+}
+
+func assertJsonResult(t *testing.T, result map[string]interface{}, sc int, method string, url string) {
+	if result["status"] != float64(sc) {
+		t.Errorf("status = %v, want %v", result["status"], sc)
+	}
+	if result["method"] != method {
+		t.Errorf("method = %v, want %v", result["method"], sc)
+	}
+	if result["url"] != url {
+		t.Errorf("url = %v, want %v", result["url"], sc)
+	}
 }
 
 func TestJSONLog(t *testing.T) {
@@ -89,58 +92,42 @@ func TestJSONLog(t *testing.T) {
 	buffer.Reset()
 	performRequest(router, "GET", "/example?a=100")
 	json.Unmarshal(buffer.Bytes(), &result)
-	assert.Equal(t, result["status"], float64(200))
-	assert.Equal(t, result["method"], "GET")
-	assert.Equal(t, result["url"], "/example?a=100")
+	assertJsonResult(t, result, 200, "GET", "/example?a=100")
 
 	buffer.Reset()
 	performRequest(router, "POST", "/example")
 	json.Unmarshal(buffer.Bytes(), &result)
-	assert.Equal(t, result["status"], float64(200))
-	assert.Equal(t, result["method"], "POST")
-	assert.Equal(t, result["url"], "/example")
+	assertJsonResult(t, result, 200, "POST", "/example")
 
 	buffer.Reset()
 	performRequest(router, "PUT", "/example")
 	json.Unmarshal(buffer.Bytes(), &result)
-	assert.Equal(t, result["status"], float64(200))
-	assert.Equal(t, result["method"], "PUT")
-	assert.Equal(t, result["url"], "/example")
+	assertJsonResult(t, result, 200, "PUT", "/example")
 
 	buffer.Reset()
 	performRequest(router, "DELETE", "/example")
 	json.Unmarshal(buffer.Bytes(), &result)
-	assert.Equal(t, result["status"], float64(200))
-	assert.Equal(t, result["method"], "DELETE")
-	assert.Equal(t, result["url"], "/example")
+	assertJsonResult(t, result, 200, "DELETE", "/example")
 
 	buffer.Reset()
 	performRequest(router, "PATCH", "/example")
 	json.Unmarshal(buffer.Bytes(), &result)
-	assert.Equal(t, result["status"], float64(200))
-	assert.Equal(t, result["method"], "PATCH")
-	assert.Equal(t, result["url"], "/example")
+	assertJsonResult(t, result, 200, "PATCH", "/example")
 
 	buffer.Reset()
 	performRequest(router, "HEAD", "/example")
 	json.Unmarshal(buffer.Bytes(), &result)
-	assert.Equal(t, result["status"], float64(200))
-	assert.Equal(t, result["method"], "HEAD")
-	assert.Equal(t, result["url"], "/example")
+	assertJsonResult(t, result, 200, "HEAD", "/example")
 
 	buffer.Reset()
 	performRequest(router, "OPTIONS", "/example")
 	json.Unmarshal(buffer.Bytes(), &result)
-	assert.Equal(t, result["status"], float64(200))
-	assert.Equal(t, result["method"], "OPTIONS")
-	assert.Equal(t, result["url"], "/example")
+	assertJsonResult(t, result, 200, "OPTIONS", "/example")
 
 	buffer.Reset()
 	performRequest(router, "GET", "/notfound")
 	json.Unmarshal(buffer.Bytes(), &result)
-	assert.Equal(t, result["status"], float64(404))
-	assert.Equal(t, result["method"], "GET")
-	assert.Equal(t, result["url"], "/notfound")
+	assertJsonResult(t, result, 404, "GET", "/notfound")
 }
 
 func performRequest(r http.Handler, method, path string) *httptest.ResponseRecorder {

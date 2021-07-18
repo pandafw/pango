@@ -119,12 +119,11 @@ func (cw *ConnWriter) dial() {
 	cw.conn = conn
 }
 
-func init() {
-	RegisterWriter("conn", func() Writer {
-		return &ConnWriter{}
-	})
+func newConnWriter() Writer {
+	return &ConnWriter{Net: "tcp", Timeout: time.Second * 2}
+}
 
-	RegisterWriter("tcp", func() Writer {
-		return &ConnWriter{Net: "tcp"}
-	})
+func init() {
+	RegisterWriter("conn", newConnWriter)
+	RegisterWriter("tcp", newConnWriter)
 }

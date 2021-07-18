@@ -146,7 +146,7 @@ func TestIsUTFLetter(t *testing.T) {
 	}
 }
 
-func TestIsAlphanumeric(t *testing.T) {
+func TestIsAlphaNumeric(t *testing.T) {
 	t.Parallel()
 
 	cs := []struct {
@@ -200,9 +200,9 @@ func TestIsAlphanumeric(t *testing.T) {
 		{"+1", false},
 	}
 	for i, c := range cs {
-		a := IsAlphanumeric(c.s)
+		a := IsAlphaNumeric(c.s)
 		if a != c.w {
-			t.Errorf("[%d] IsAlphanumeric(%q) = %v, want %v", i, c.s, a, c.w)
+			t.Errorf("[%d] IsAlphaNumeric(%q) = %v, want %v", i, c.s, a, c.w)
 		}
 	}
 }
@@ -1192,61 +1192,6 @@ func TestIsMultibyte(t *testing.T) {
 		a := IsMultibyte(c.s)
 		if a != c.w {
 			t.Errorf("[%d] IsMultibyte(%q) = %v, want %v", i, c.s, a, c.w)
-		}
-	}
-}
-
-func TestIsASCII(t *testing.T) {
-	t.Parallel()
-
-	cs := []struct {
-		w bool
-		s string
-	}{
-		{false, ""},
-		{false, "ｆｏｏbar"},
-		{false, "ｘｙｚ０９８"},
-		{false, "１２３456"},
-		{false, "ｶﾀｶﾅ"},
-		{true, "foobar"},
-		{true, "0987654321"},
-		{true, "test@example.com"},
-		{true, "1234abcDEF"},
-		{false, ""},
-	}
-
-	for i, c := range cs {
-		a := IsASCII(c.s)
-		if a != c.w {
-			t.Errorf("[%d] IsASCII(%q) = %v, want %v", i, c.s, a, c.w)
-		}
-	}
-}
-
-func TestIsPrintableASCII(t *testing.T) {
-	t.Parallel()
-
-	cs := []struct {
-		w bool
-		s string
-	}{
-		{false, ""},
-		{false, "ｆｏｏbar"},
-		{false, "ｘｙｚ０９８"},
-		{false, "１２３456"},
-		{false, "ｶﾀｶﾅ"},
-		{true, "foobar"},
-		{true, "0987654321"},
-		{true, "test@example.com"},
-		{true, "1234abcDEF"},
-		{false, "newline\n"},
-		{false, "\x19test\x7F"},
-	}
-
-	for i, c := range cs {
-		a := IsPrintableASCII(c.s)
-		if a != c.w {
-			t.Errorf("[%d] IsPrintableASCII(%q) = %v, want %v", i, c.s, a, c.w)
 		}
 	}
 }

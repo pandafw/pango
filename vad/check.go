@@ -129,8 +129,8 @@ func IsUTFLetter(s string) bool {
 
 }
 
-// IsAlphanumeric checks if the string contains only letters and numbers.
-func IsAlphanumeric(s string) bool {
+// IsAlphaNumeric checks if the string contains only letters and numbers.
+func IsAlphaNumeric(s string) bool {
 	if s == "" {
 		return false
 	}
@@ -541,28 +541,32 @@ func IsDNSName(s string) bool {
 // IsHash checks if a string is a hash of type algorithm.
 // Algorithm is one of ['md4', 'md5', 'sha1', 'sha256', 'sha384', 'sha512', 'ripemd128', 'ripemd160', 'tiger128', 'tiger160', 'tiger192', 'crc32', 'crc32b']
 func IsHash(s string, algorithm string) bool {
-	var len string
-	algo := str.ToLower(algorithm)
+	n := 0
 
-	if algo == "crc32" || algo == "crc32b" {
-		len = "8"
-	} else if algo == "md5" || algo == "md4" || algo == "ripemd128" || algo == "tiger128" {
-		len = "32"
-	} else if algo == "sha1" || algo == "ripemd160" || algo == "tiger160" {
-		len = "40"
-	} else if algo == "tiger192" {
-		len = "48"
-	} else if algo == "sha256" {
-		len = "64"
-	} else if algo == "sha384" {
-		len = "96"
-	} else if algo == "sha512" {
-		len = "128"
-	} else {
+	algo := str.ToLower(algorithm)
+	switch algo {
+	case "crc32", "crc32b":
+		n = 8
+	case "md5", "md4", "ripemd128", "tiger128":
+		n = 32
+	case "sha1", "ripemd160", "tiger160":
+		n = 40
+	case "tiger192":
+		n = 48
+	case "sha256":
+		n = 64
+	case "sha384":
+		n = 96
+	case "sha512":
+		n = 128
+	default:
 		return false
 	}
 
-	return str.Matches(s, "^[a-f0-9]{"+len+"}$")
+	if len(s) != n {
+		return false
+	}
+	return IsAlphaNumeric(s)
 }
 
 // IsSHA512 checks is a string is a SHA512 hash. Alias for `IsHash(s, "sha512")`

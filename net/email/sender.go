@@ -191,7 +191,7 @@ func (s *Sender) writeMail(w io.Writer, m *Email) error {
 
 	var boundary string
 	if m.HTML || len(m.Attachments) > 0 {
-		boundary = str.RandDigitLetters(28)
+		boundary = str.RandLetterNumbers(28)
 		header["Content-Type"] = "multipart/mixed; boundary=" + boundary
 	} else {
 		header["Content-Type"] = "text/plain; charset=UTF-8"

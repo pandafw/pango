@@ -94,7 +94,7 @@ func testSendEmail(t *testing.T, m *Email) {
 	}
 
 	fmt.Printf("SMTP send %s -> %s\n", m.from, m.GetTos()[0])
-	m.Subject = "test subject " + time.Now().String() + strings.Repeat(" あいうえお", 10)
+	m.Subject = "test subject " + time.Now().String() + strings.Repeat(" 一二三四五", 10)
 	ss.TLSConfig = &tls.Config{ServerName: ss.Host, InsecureSkipVerify: true}
 	err = ss.DialAndSend(m)
 	if err != nil {
@@ -105,15 +105,15 @@ func testSendEmail(t *testing.T, m *Email) {
 
 func TestSendTextEmailOnly(t *testing.T) {
 	email := &Email{}
-	email.Message = ".\nthis is a test email " + time.Now().String() + " from example.com. あいうえお"
+	email.Message = ".\nthis is a test email " + time.Now().String() + " from example.com. 一二三四五"
 	testSendEmail(t, email)
 }
 
 func TestSendTextEmailAttach(t *testing.T) {
 	email := &Email{}
 
-	email.Message = ".\nthis is a test email " + time.Now().String() + " from example.com. あいうえお"
-	email.AttachString("string.txt", strings.Repeat("abcdefgあいうえお\r\n", 10))
+	email.Message = ".\nthis is a test email " + time.Now().String() + " from example.com. 一二三四五"
+	email.AttachString("string.txt", strings.Repeat("abcdefg一二三四五\r\n", 10))
 	err := email.EmbedFile("panda.png", "testdata/panda.png")
 	if err != nil {
 		t.Error(err)
@@ -125,7 +125,7 @@ func TestSendTextEmailAttach(t *testing.T) {
 
 func TestSendHtmlEmailOnly(t *testing.T) {
 	email := &Email{}
-	email.SetHTMLMsg("<pre><font color=red>.\nthis is a test email " + time.Now().String() + " from example.com. あいうえお</font></pre>")
+	email.SetHTMLMsg("<pre><font color=red>.\nthis is a test email " + time.Now().String() + " from example.com. 一二三四五</font></pre>")
 
 	testSendEmail(t, email)
 }
@@ -133,8 +133,8 @@ func TestSendHtmlEmailOnly(t *testing.T) {
 func TestSendHtmlEmailAttach(t *testing.T) {
 	email := &Email{}
 
-	email.SetHTMLMsg("<pre><IMG src=\"cid:panda.png\"> <font color=red>.\nthis is a test email " + time.Now().String() + " from example.com. あいうえお</font></pre>")
-	email.AttachString("string.txt", strings.Repeat("abcdefgあいうえお\r\n", 10))
+	email.SetHTMLMsg("<pre><IMG src=\"cid:panda.png\"> <font color=red>.\nthis is a test email " + time.Now().String() + " from example.com. 一二三四五</font></pre>")
+	email.AttachString("string.txt", strings.Repeat("abcdefg一二三四五\r\n", 10))
 
 	err := email.EmbedFile("panda.png", "testdata/panda.png")
 	if err != nil {

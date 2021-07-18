@@ -11,34 +11,52 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 )
 
 func init() {
 	gin.SetMode(gin.ReleaseMode)
 }
 
+func assertResponse(t *testing.T, rr *httptest.ResponseRecorder, sc int, hce, hvary, hcl, body string) {
+	if sc != rr.Code {
+		t.Errorf("rr.Code = %v, want %v", rr.Code, sc)
+	}
+	if rr.Header().Get("Content-Encoding") != hce {
+		t.Errorf(`Header[Content-Encoding] = %v, want %v`, rr.Header().Get("Content-Encoding"), hce)
+	}
+	if rr.Header().Get("Vary") != hvary {
+		t.Errorf(`Header[Vary] = %v, want %v`, rr.Header().Get("Vary"), hce)
+	}
+	if rr.Header().Get("Content-Length") != hcl {
+		t.Errorf(`Header[Content-Length] = %v, want %v`, rr.Header().Get("Content-Length"), hcl)
+	}
+	if rr.Body.String() != body {
+		t.Errorf(`Body = %v, want %v`, rr.Body.String(), body)
+	}
+}
+
 func assertGzipIgnore(t *testing.T, rr *httptest.ResponseRecorder, body string) {
-	assert.Equal(t, http.StatusOK, rr.Code)
-	assert.Equal(t, "", rr.Header().Get("Content-Encoding"))
-	assert.Equal(t, "", rr.Header().Get("Vary"))
-	assert.Equal(t, "", rr.Header().Get("Content-Length"))
-	assert.Equal(t, body, rr.Body.String())
+	assertResponse(t, rr, http.StatusOK, "", "", "", body)
 }
 
 func assertGzipEnable(t *testing.T, rr *httptest.ResponseRecorder, body string) {
-	assert.Equal(t, 200, rr.Code)
-	assert.Equal(t, "gzip", rr.Header().Get("Content-Encoding"))
-	assert.Equal(t, "Accept-Encoding", rr.Header().Get("Vary"))
-	assert.Equal(t, strconv.Itoa(rr.Body.Len()), rr.Header().Get("Content-Length"))
-	assert.NotEqual(t, len(body), rr.Body.Len())
+	assertResponse(t, rr, http.StatusOK, "gzip", "Accept-Encoding", strconv.Itoa(rr.Body.Len()), body)
+
+	if len(body) == rr.Body.Len() {
+		t.Errorf("len(body) = rr.Body.Len() = %v", len(body))
+	}
 
 	gr, err := gzip.NewReader(rr.Body)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Errorf("gzip.NewReader(rr.Body) = %v", err)
+		return
+	}
 	defer gr.Close()
 
 	bdec, _ := ioutil.ReadAll(gr)
-	assert.Equal(t, body, string(bdec))
+	if body != string(bdec) {
+		t.Errorf("BODY = %v, want %v", string(bdec), body)
+	}
 }
 
 func TestGzip(t *testing.T) {

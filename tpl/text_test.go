@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/pandafw/pango/str"
 )
 
 func textTestLoad(t *testing.T, tt *TextTemplate) {
@@ -17,9 +17,22 @@ func textTestLoad(t *testing.T, tt *TextTemplate) {
 		"Message": "Hello world!",
 		"Time":    time.Now(),
 	}
-	assert.Nil(t, tt.Render(sb, "index", ctx))
-	fmt.Println(strings.Repeat("-", 60))
-	fmt.Println(sb.String())
+	err := tt.Render(sb, "index", ctx)
+	if err != nil {
+		t.Errorf(`tt.Render(sb, "index", ctx) = %v`, err)
+		return
+	}
+
+	txt := sb.String()
+	if !str.Contains(txt, fmt.Sprintf("<title>%s</title>", ctx["Title"])) {
+		t.Errorf("Incorrect Title\n%s", txt)
+	}
+	if !str.Contains(txt, fmt.Sprintf("<p>%s</p>", ctx["Message"])) {
+		t.Errorf("Incorrect Message\n%s", txt)
+	}
+	if !str.Contains(txt, fmt.Sprintf("<p>Time: %s</p>", ctx["Time"].(time.Time).Format("2006/1/2 15:04:05"))) {
+		t.Errorf("Incorrect Message\n%s", txt)
+	}
 
 	sb.Reset()
 	ctx = map[string]interface{}{
@@ -27,16 +40,32 @@ func textTestLoad(t *testing.T, tt *TextTemplate) {
 		"Message": "Hello world!",
 		"Time":    time.Now(),
 	}
-	assert.Nil(t, tt.Render(sb, "admin/admin", ctx))
-	fmt.Println(strings.Repeat("-", 60))
-	fmt.Println(sb.String())
+	err = tt.Render(sb, "admin/admin", ctx)
+	if err != nil {
+		t.Errorf(`tt.Render(sb, "admin/admin", ctx) = %v`, err)
+		return
+	}
+	txt = sb.String()
+	if !str.Contains(txt, fmt.Sprintf("<title>%s</title>", ctx["Title"])) {
+		t.Errorf("Incorrect Title\n%s", txt)
+	}
+	if !str.Contains(txt, fmt.Sprintf("<p>Admin: %s</p>", ctx["Message"])) {
+		t.Errorf("Incorrect Message\n%s", txt)
+	}
+	if !str.Contains(txt, fmt.Sprintf("<p>Time: %s</p>", ctx["Time"].(time.Time).Format("2006/1/2 15:04:05"))) {
+		t.Errorf("Incorrect Message\n%s", txt)
+	}
 }
 
 func TestLoadText(t *testing.T) {
 	tt := NewTextTemplate()
 	root := "testdata"
 
-	assert.Nil(t, tt.Load(root))
+	err := tt.Load(root)
+	if err != nil {
+		t.Errorf(`ht.Load(%q) = %v`, root, err)
+		return
+	}
 
 	textTestLoad(t, tt)
 }
@@ -45,7 +74,11 @@ func TestFSLoadText(t *testing.T) {
 	tt := NewTextTemplate()
 	root := "testdata"
 
-	assert.Nil(t, tt.LoadFS(testdata, root))
+	err := tt.LoadFS(testdata, root)
+	if err != nil {
+		t.Errorf(`ht.LoadFS(%q) = %v`, root, err)
+		return
+	}
 
 	textTestLoad(t, tt)
 }

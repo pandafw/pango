@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 )
 
 //go:embed testdata
@@ -27,9 +26,15 @@ func testGetFile(t *testing.T, r *gin.Engine, path string, cache string) {
 	req, _ := http.NewRequest("GET", path, nil)
 	r.ServeHTTP(w, req)
 
-	assert.Equal(t, 200, w.Code)
-	assert.Equal(t, cache, w.Header().Get("Cache-Control"))
-	assert.Equal(t, filepath.Base(path), w.Body.String())
+	if 200 != w.Code {
+		t.Errorf("w.Code = %v, want %v", w.Code, 200)
+	}
+	if cache != w.Header().Get("Cache-Control") {
+		t.Errorf("Header[Cache-Control] = %v, want %v", w.Header().Get("Cache-Control"), cache)
+	}
+	if filepath.Base(path) != w.Body.String() {
+		t.Errorf(`Body = %v, want %v`, w.Body.String(), filepath.Base(path))
+	}
 }
 
 func TestStatic(t *testing.T) {

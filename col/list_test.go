@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/pandafw/pango/str"
-	"github.com/stretchr/testify/assert"
 )
 
 func checkListLen(t *testing.T, l *List, len int) bool {
@@ -374,12 +373,26 @@ func TestListItem(t *testing.T) {
 		l.PushBack(i)
 	}
 
-	assert.Nil(t, l.Item(100))
-	assert.Nil(t, l.Item(-101))
+	if l.Item(100) != nil {
+		t.Error("List.Item(100) != nil")
+	}
+	if l.Item(-101) != nil {
+		t.Error("List.Item(-101) != nil")
+	}
 
 	for i := 0; i < 100; i++ {
-		assert.Equal(t, i, l.Item(i).Value, i)
-		assert.Equal(t, i, l.Item(i-100).Value, i)
+		w := i
+		s := i
+		a := l.Item(s).Value
+		if a != w {
+			t.Errorf("List.Item(%v).Value = %v, want %v", s, a, w)
+		}
+
+		s = i - 100
+		a = l.Item(s).Value
+		if a != w {
+			t.Errorf("List.Item(%v).Value = %v, want %v", s, a, w)
+		}
 	}
 }
 
@@ -390,16 +403,25 @@ func TestListSwap(t *testing.T) {
 		l.PushBack(i)
 	}
 
-	assert.False(t, l.Swap(l.Item(0), l.Front()))
+	if l.Swap(l.Item(0), l.Front()) {
+		t.Error("l.Swap(l.Item(0), l.Front()) = true, want false")
+	}
+
 	for i := 0; i < 50; i++ {
 		ia := l.Item(i)
 		ib := l.Item(-i - 1)
-		assert.True(t, l.Swap(ia, ib), i)
+		a := l.Swap(ia, ib)
+		if !a {
+			t.Errorf("List.Swap(%v, %v) = %v, want %v", ia, ib, a, true)
+		}
 	}
 
 	for i := 0; i < 100; i++ {
-		li := l.Item(i)
-		assert.Equal(t, 100-1-i, li.Value, i)
+		e := 100 - 1 - i
+		a := l.Item(i).Value
+		if a != e {
+			t.Errorf("List.Item(%v).Value = %v, want %v", i, a, e)
+		}
 	}
 }
 
@@ -445,11 +467,18 @@ func TestListDelete(t *testing.T) {
 		l.PushBack(i)
 	}
 
-	assert.False(t, l.Delete(100))
-	for i := 0; i < 100; i++ {
-		assert.True(t, l.Delete(i))
+	if l.Delete(100) {
+		t.Error("List.Delete(100) should return false")
 	}
-	assert.True(t, l.IsEmpty())
+	for i := 0; i < 100; i++ {
+		if !l.Delete(i) {
+			t.Errorf("List.Delete(%v) should return true", i)
+		}
+	}
+
+	if !l.IsEmpty() {
+		t.Error("List.Empty() should return true")
+	}
 }
 
 func TestListDeleteAll(t *testing.T) {
@@ -462,33 +491,49 @@ func TestListDeleteAll(t *testing.T) {
 		}
 	}
 
-	assert.Equal(t, 0, l.DeleteAll(100))
+	if l.DeleteAll(100) != 0 {
+		t.Error("List.DeleteAll(100) != 0")
+	}
 	for i := 0; i < 100; i++ {
 		z := i % 10
-		assert.Equal(t, z, l.DeleteAll(i))
+		a := l.DeleteAll(i)
+		if a != z {
+			t.Errorf("List.DeleteAll(%v) = %v, want %v", i, a, z)
+		}
 	}
-	assert.True(t, l.IsEmpty())
+
+	if !l.IsEmpty() {
+		t.Error("List.Empty() should return true")
+	}
 }
 
 func TestListString(t *testing.T) {
-	assert.Equal(t, "[1,3,2]", fmt.Sprintf("%s", NewList(1, 3, 2)))
+	e := "[1,3,2]"
+	a := fmt.Sprintf("%s", NewList(1, 3, 2))
+	if a != e {
+		t.Errorf(`fmt.Sprintf("%%s", NewList(1, 3, 2)) = %v, want %v`, a, e)
+	}
 }
 
 func TestListMarshalJSON(t *testing.T) {
-	type Case struct {
+	cs := []struct {
 		list *List
 		json string
-	}
-
-	cs := []Case{
+	}{
 		{NewList(0, 1, "0", "1", 0.0, 1.0, true, false), `[0,1,"0","1",0,1,true,false]`},
 		{NewList(0, "1", 2.0, []int{1, 2}, map[int]int{1: 10, 2: 20}), `[0,"1",2,[1,2],{"1":10,"2":20}]`},
 	}
 
 	for i, c := range cs {
 		bs, err := json.Marshal(c.list)
-		assert.Nil(t, err)
-		assert.Equal(t, c.json, string(bs), fmt.Sprintf("Marshal [%d]", i))
+		if err != nil {
+			t.Errorf("[%d] json.Marshal(%v) error: %v", i, c.list, err)
+		}
+
+		a := string(bs)
+		if a != c.json {
+			t.Errorf("[%d] json.Marshal(%v) = %q, want %q", i, c.list, a, c.list)
+		}
 	}
 }
 
@@ -506,9 +551,13 @@ func TestListUnmarshalJSON(t *testing.T) {
 	for i, c := range cs {
 		a := NewList()
 		err := json.Unmarshal([]byte(c.json), a)
-		assert.Nil(t, err)
+
+		if err != nil {
+			t.Errorf("[%d] json.Unmarshal(%v) error: %v", i, c.json, err)
+		}
+
 		if !reflect.DeepEqual(a, c.list) {
-			t.Fatalf("Unmarshal List [%d] not deeply equal: %#v expected %#v", i, a, c.list)
+			t.Errorf("[%d] json.Unmarshal(%q) = %v, want %q", i, c.json, a, c.list)
 		}
 	}
 }

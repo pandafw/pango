@@ -2,10 +2,21 @@ package col
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestListItemString(t *testing.T) {
-	assert.Equal(t, "a", (&ListItem{Value: "a"}).String())
+	cs := []struct {
+		e string
+		s interface{}
+	}{
+		{"a", "a"},
+		{"1", 1},
+	}
+
+	for _, c := range cs {
+		a := (&ListItem{Value: c.s}).String()
+		if a != c.e {
+			t.Errorf("ListIem(%v).String() = %q, want %q", c.s, a, c.e)
+		}
+	}
 }

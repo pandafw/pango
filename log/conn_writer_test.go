@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func testConnTCPServer(sigChan chan string, finChan chan string, revChan chan string) {
@@ -65,7 +64,7 @@ func testConnEcho(conn net.Conn, wg *sync.WaitGroup, revChan chan string) {
 	}
 }
 
-func TestConn(t *testing.T) {
+func TestConnWriter(t *testing.T) {
 	sigChan := make(chan string, 1)
 	finChan := make(chan string, 1)
 	revChan := make(chan string, 100)
@@ -113,5 +112,7 @@ func TestConn(t *testing.T) {
 		break
 	}
 
-	assert.Equal(t, ss, rs)
+	if !reflect.DeepEqual(ss, rs) {
+		t.Errorf("TestConnWriter() failure\nexcept: %q\nactual: %q", ss, rs)
+	}
 }

@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/pandafw/pango/iox"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestLoadFile(t *testing.T) {
@@ -22,15 +21,33 @@ func TestLoadFile(t *testing.T) {
 	ini.Multiple = true
 
 	// load
-	assert.Nil(t, ini.LoadFile(fin))
+	if ini.LoadFile(fin) != nil {
+		t.Errorf("ini.LoadFile(%q) != nil", fin)
+	}
 
 	// value
 	other := ini.Section("other")
-	assert.NotNil(t, other)
-	assert.Equal(t, 42, other.GetInt("dec"))
-	assert.Equal(t, 42, other.GetInt("hex"))
-	assert.True(t, other.GetBool("true"))
-	assert.False(t, other.GetBool("false"))
+	if other == nil {
+		t.Error(`ini.Section("other") == nil`)
+		return
+	}
+
+	dec := other.GetInt("dec")
+	if 42 != dec {
+		t.Errorf(`other.GetInt("dec") = %v, want %v`, dec, 42)
+	}
+	hex := other.GetInt("hex")
+	if 42 != hex {
+		t.Errorf(`other.GetInt("hex") = %v, want %v`, dec, 42)
+	}
+	vtrue := other.GetBool("true")
+	if !vtrue {
+		t.Error(`other.GetBool("true") != true`)
+	}
+	vfalse := other.GetBool("false")
+	if vfalse {
+		t.Error(`other.GetBool("false") != false`)
+	}
 
 	// expected file
 	bexp, _ := ioutil.ReadFile(fexp)
@@ -39,21 +56,38 @@ func TestLoadFile(t *testing.T) {
 	// write data
 	{
 		sout := &strings.Builder{}
-		assert.Nil(t, ini.WriteData(sout))
-		assert.Equal(t, sexp, sout.String())
+		werr := ini.WriteData(sout)
+		if werr != nil {
+			t.Errorf(`ini.WriteData(sout) = %v`, werr)
+		}
+		if sexp != sout.String() {
+			t.Errorf(`ini.WriteData(sout)\n actual: %v\n   want: %v`, sout.String(), sexp)
+		}
 	}
 
 	// write file
 	{
-		assert.Nil(t, ini.WriteFile(fout))
+		werr := ini.WriteFile(fout)
+		if werr != nil {
+			t.Errorf(`ini.WriteFile(fout) = %v`, werr)
+		}
+
 		bout, _ := ioutil.ReadFile(fout)
 		sout := string(bout)
-		assert.Equal(t, sexp, sout)
+		if sexp != sout {
+			t.Errorf(`ini.WriteFile(fout)\n actual: %v\n   want: %v`, fout, sexp)
+		}
 	}
 
 	// remove section
 	{
-		assert.NotNil(t, ini.RemoveSection(""))
-		assert.Nil(t, ini.RemoveSection("not exist"))
+		sec := ini.RemoveSection("")
+		if sec == nil {
+			t.Errorf(`ini.RemoveSection("") = %v`, sec)
+		}
+		sec = ini.RemoveSection("not exist")
+		if sec != nil {
+			t.Errorf(`ini.RemoveSection("not exist") = %v`, sec)
+		}
 	}
 }

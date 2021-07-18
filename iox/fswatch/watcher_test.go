@@ -11,7 +11,6 @@ import (
 
 	"github.com/pandafw/pango/iox"
 	"github.com/pandafw/pango/log"
-	"github.com/stretchr/testify/assert"
 )
 
 func prepareTestDir() {
@@ -43,7 +42,10 @@ func changeTestFiles() {
 }
 
 func assertTestFiles(t *testing.T, files map[string]Op) {
-	assert.Equal(t, 3*2*2, len(files))
+	if 3*2*2 != len(files) {
+		t.Errorf("len(files) = %v, want %v", len(files), 3*2*2)
+		return
+	}
 
 	for i := 1; i <= 3; i++ {
 		for j := 1; j <= 2; j++ {
@@ -51,7 +53,9 @@ func assertTestFiles(t *testing.T, files map[string]Op) {
 			for k := 1; k <= 2; k++ {
 				fn := filepath.Join(dir, fmt.Sprintf("t%d.txt", k))
 				_, ok := files[fn]
-				assert.True(t, ok, fn)
+				if !ok {
+					t.Errorf("file %q not exists", fn)
+				}
 			}
 		}
 	}
@@ -79,19 +83,30 @@ func TestWatchDirOnly(t *testing.T) {
 
 	fw.Logger.Info("------------ Start ----------------")
 	err := fw.Start()
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("fw.Start() = %v", err)
+		return
+	}
 
 	changeTestFiles()
 
 	fw.Logger.Info("------------ Stop ----------------")
 	err = fw.Stop()
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("fw.Stop() = %v", err)
+		return
+	}
 
-	assert.Equal(t, 3, len(files))
+	if 3 != len(files) {
+		t.Errorf("len(files) = %v, want %v", len(files), 3)
+		return
+	}
 	for i := 1; i <= 3; i++ {
 		dir := filepath.Join("testdir", strconv.Itoa(i))
 		_, ok := files[dir]
-		assert.True(t, ok, dir)
+		if !ok {
+			t.Errorf("dir %v not exists", dir)
+		}
 	}
 }
 
@@ -119,13 +134,19 @@ func TestWatchRecursive(t *testing.T) {
 
 	fw.Logger.Info("------------ Start ----------------")
 	err := fw.Start()
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf(`fw.Start() = %v`, err)
+		return
+	}
 
 	changeTestFiles()
 
 	fw.Logger.Info("------------ Stop ----------------")
 	err = fw.Stop()
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf(`fw.Stop() = %v`, err)
+		return
+	}
 
 	assertTestFiles(t, files)
 }
@@ -154,21 +175,33 @@ func TestWatchAgain(t *testing.T) {
 
 	fw.Logger.Info("------------ Start ----------------")
 	err := fw.Start()
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf(`fw.Start() = %v`, err)
+		return
+	}
 
 	fw.Logger.Info("------------ Stop ----------------")
 	err = fw.Stop()
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf(`fw.Stop() = %v`, err)
+		return
+	}
 
 	fw.Logger.Info("------------ Start Again ----------------")
 	err = fw.Start()
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf(`fw.Start() = %v`, err)
+		return
+	}
 
 	changeTestFiles()
 
 	fw.Logger.Info("------------ Stop Again ----------------")
 	err = fw.Stop()
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf(`fw.Stop() = %v`, err)
+		return
+	}
 
 	assertTestFiles(t, files)
 }

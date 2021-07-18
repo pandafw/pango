@@ -2,13 +2,11 @@ package col
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"sort"
 	"testing"
 
 	"github.com/pandafw/pango/str"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestHashSetSimple(t *testing.T) {
@@ -123,32 +121,35 @@ func sortSetJSON(s string) string {
 }
 
 func TestHashSetMarshalJSON(t *testing.T) {
-	type Case struct {
+	cs := []struct {
 		hset *HashSet
 		json string
-	}
-
-	cs := []Case{
+	}{
 		{NewHashSet(0, 1, "0", "1", 0.1, 1.2, true, false, "0", "1"), `[0,1,"0","1",0.1,1.2,true,false]`},
 		//TODO		{NewHashSet(0, "1", 2.0, 0, "1", 2.0, []int{1, 2}, map[int]int{1: 10, 2: 20}), `[0,"1",2,[1,2],{"1":10,"2":20}]`},
 	}
 
 	for i, c := range cs {
 		bs, err := json.Marshal(c.hset)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("[%d] Failed to Mashal HashSet %v : %v", i, c.hset, err)
+			continue
+		}
+
 		act := sortSetJSON(string(bs))
 		exp := sortSetJSON(c.json)
-		assert.Equal(t, exp, act, fmt.Sprintf("Marshal [%d]", i))
+
+		if !reflect.DeepEqual(exp, act) {
+			t.Errorf("[%d] Mashal HashSet (%v) = %v, want %v", i, c.hset, act, exp)
+		}
 	}
 }
 
 func TestHashSetUnmarshalJSON(t *testing.T) {
-	type Case struct {
+	cs := []struct {
 		json string
 		hset *HashSet
-	}
-
-	cs := []Case{
+	}{
 		{`["0","1",0,1,true,false]`, NewHashSet("0", "1", 0.0, 1.0, true, false)},
 		//TODO		{`["1",2,[1,2],{"1":10,"2":20}]`, NewList("1", 2.0, NewList(1.0, 2.0), map[string]interface{}{"1": 10.0, "2": 20.0})},
 	}
@@ -156,9 +157,12 @@ func TestHashSetUnmarshalJSON(t *testing.T) {
 	for i, c := range cs {
 		a := NewHashSet()
 		err := json.Unmarshal([]byte(c.json), a)
-		assert.Nil(t, err)
+		if err != nil {
+			t.Errorf("[%d] Failed to Unmashal HashSet %v : %v", i, c.json, err)
+			continue
+		}
 		if !reflect.DeepEqual(a, c.hset) {
-			t.Fatalf("Unmarshal List [%d] not deeply equal: %#v expected %#v", i, a, c.hset)
+			t.Errorf("[%d] Unmarshal List not deeply equal: %#v expected %#v", i, a, c.hset)
 		}
 	}
 }
